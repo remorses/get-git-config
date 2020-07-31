@@ -2,6 +2,8 @@
 
 Parses the .git/config file to extract information like remotes and branches
 
+Does not require the git command installed, searches the git config on parent directories and throws if does not find any
+
 ## Usage
 
 ```
