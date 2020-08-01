@@ -40,9 +40,9 @@ export async function getGitConfig(
     dir: string = '.',
     options: { gitDir?: string } = {},
 ): Promise<GitConfigType> {
-    const config = findGitSync(dir, options)
-    if (!config) throw new Error('no gitconfig to be found at ' + dir)
-    const data = await fs.promises.readFile(config)
+    const [configPath] = findGitSync(dir, options)
+    if (!configPath) throw new Error('no gitconfig to be found at ' + dir)
+    const data = await fs.promises.readFile(configPath)
     var formatted = format(ini.parse(data.toString()))
     return formatted
 }
@@ -51,9 +51,9 @@ export function getGitConfigSync(
     dir: string = '.',
     options: { gitDir?: string } = {},
 ): GitConfigType {
-    const config = findGitSync(dir, options)
-    if (!config) throw new Error('no gitconfig to be found at ' + dir)
-    const data = fs.readFileSync(config)
+    const [configPath] = findGitSync(dir, options)
+    if (!configPath) throw new Error('no gitconfig to be found at ' + dir)
+    const data = fs.readFileSync(configPath)
     var formatted = format(ini.parse(data.toString()))
     return formatted
 }
@@ -76,14 +76,22 @@ function format(data) {
     return out
 }
 
-function findGitSync(dir, options) {
+function findGitSync(dir, options): [string, string] {
     var folder = path.resolve(
         dir,
         options.gitDir || process.env.GIT_DIR || '.git',
         'config',
     )
     const exists = fs.existsSync(folder)
-    if (exists) return folder
-    if (dir === path.resolve(dir, '..')) return false
+    if (exists) return [folder, path.resolve(dir)]
+    if (dir === path.resolve(dir, '..')) return ['', '']
     return findGitSync(path.resolve(dir, '..'), options)
+}
+
+export function getRepoRoot(
+    dir: string = '.',
+    options: { gitDir?: string } = {},
+): string {
+    const [_, root] = findGitSync(dir, options)
+    return root
 }
